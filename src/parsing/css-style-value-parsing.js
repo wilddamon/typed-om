@@ -15,16 +15,9 @@
 (function(internal) {
 
   var parsers = {};
-  parsers[CSSNumberValue] = internal.parsing.consumeNumber;
-  parsers[CSSLengthValue] = internal.parsing.consumeLength;
-  parsers[CSSTransformValue] = internal.parsing.consumeTransform;
-
-  function consume(consumer, string) {
-    if (!consumer) {
-      return null;
-    }
-    return consumer(string);
-  }
+  parsers['CSSNumberValue'] = internal.parsing.consumeNumberValue;
+  parsers['CSSLengthValue'] = internal.parsing.consumeLengthValue;
+  parsers['CSSTransformValue'] = internal.parsing.consumeTransformValue;
 
   function consumeKeyword(property, string) {
     var consumed = internal.parsing.consumeToken(/^[a-z_]+[a-z0-9_-]*/i, string);
@@ -50,12 +43,15 @@
 
     var supportedStyleValues = internal.propertyDictionary().supportedStyleValues(property);
     for (var i = 0; i < supportedStyleValues.length; i++) {
-      var parsed = consume(parsers[supportedStyleValues[i]], string);
+      var consumer = parsers[supportedStyleValues[i].name];
+      if (!consumer) {
+        continue;
+      }
+      var parsed = consumer(string);
       if (parsed) {
         return parsed;
       }
     }
-
     return null;
   }
 
@@ -63,7 +59,7 @@
     var propertyDictionary = internal.propertyDictionary();
     if (propertyDictionary.isListValuedProperty(property)) {
       var separator = propertyDictionary.listValueSeparator(property);
-      return internal.parsing.consumeRepeated(consumeStyleValue.bind(null, property), separator, string);
+      return internal.parsing.consumeRepeated(consumeStyleValue.bind(null, property), new RegExp('^' + separator), string);
     } else {
       return consumeStyleValue(property, string);
     }
