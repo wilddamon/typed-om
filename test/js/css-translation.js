@@ -86,8 +86,8 @@ suite('CSSTranslation', function() {
 
   test('Parsing valid basic strings results in CSSTranslation with correct values', function() {
     var values = [
-      {str: 'translate(10PX)', x: 10, y: 0, remaining: ''},
-      {str: 'translate(10px) YAY', x: 10, y: 0, remaining: 'YAY'},
+      {str: 'translate(10PX)', x: 10, y: 0, cssText: 'translate(10PX)', remaining: ''},
+      {str: 'translate(10px) YAY', x: 10, y: 0, cssText: 'translate(10px)', remaining: 'YAY'},
       {str: 'translate(-13px)', x: -13, y: 0, remaining: ''},
       {str: 'TrAnSlAtE(14px)', x: 14, y: 0, remaining: ''},
       {str: 'translate(11px, 12px)', x: 11, y: 12, remaining: ''},

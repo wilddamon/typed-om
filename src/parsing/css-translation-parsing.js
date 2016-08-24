@@ -14,6 +14,29 @@
 
 (function(internal) {
   var parsing = internal.parsing;
+  var zeroLength = new CSSSimpleLength(0, 'px');		
+
+  function translate3d(coords, cssText, remaining) {
+      if (coords.length != 3) {
+        return null;
+      }
+      return [internal.cssTranslation3D(coords, cssText), remaining];
+  }
+
+  function translateXYorZ(type, coords, cssText, remaining) {
+    if (coords.length != 1) {
+      return null;
+    }
+    switch (type) {
+      case 'x':
+        return [internal.cssTranslation2D(coords[0], zeroLength, cssText), remaining];
+      case 'y':
+        return [internal.cssTranslation2D(zeroLength, coords[0], cssText), remaining];
+      case 'z':
+        return [internal.cssTranslation3D(zeroLength, zeroLength, coords[0], cssText), remaining];
+    }
+    return null;
+  }
 
   function consumeTranslation(string) {
     var params = parsing.consumeList([
@@ -28,6 +51,9 @@
     }
 
     var remaining = params[1];
+    // TODO(wilddamon): Get rid of this by making consumers return
+    // [ result, consumed, remaining ] or similar.
+    var cssText = string.substring(0, string.length - remaining.length);
     var type = params[0][0];
     var coords = params[0][1];
 
@@ -39,17 +65,21 @@
 
     switch (type) {
       case '3d' :
-        return internal.cssTranslationFromTranslate3d(coords, string, remaining);
+        return translate3d(coords, cssText, remaining);
       case 'x':
-        return internal.cssTranslationFromTranslateX(coords, string, remaining);
       case 'y':
-        return internal.cssTranslationFromTranslateY(coords, string, remaining);
       case 'z':
-        return internal.cssTranslationFromTranslateZ(coords, string, remaining);
+        return translateXYorZ(type, coords, cssText, remaining);
     }
 
-    // Only translate(s) and translate(x, y) remain.
-    return internal.cssTranslationFromTranslate(coords, string, remaining);
+    // Only translate(x) and translate(x, y) remain.
+    if (coords.length == 1) {
+      return [internal.cssTranslation2D(coords[0], zeroLength, cssText), remaining];
+    }		
+    if (coords.length == 2) {		
+      return [internal.cssTranslation2D(coords[0], coords[1], cssText), remaining];
+    }		
+    return null;
   }
 
   internal.parsing.consumeTranslation = consumeTranslation;

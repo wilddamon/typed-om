@@ -30,7 +30,16 @@
     return matrix;
   };
 
-  function generateCssString(cssTranslation) {
+  function makeCSSTextGetter(translation, cssText) {
+    Object.defineProperty(translation, 'cssText', {
+      get: function() {
+        return cssText;
+      },
+      configurable: true,
+    });
+  }
+
+  function generateCSSText(cssTranslation) {
     if (cssTranslation.is2D) {
       return 'translate('
         + cssTranslation.x.cssText + ', '
@@ -63,76 +72,24 @@
     this.matrix = computeMatrix(this);
     this.is2D = this.matrix.is2D;
 
-    Object.defineProperty(this, 'cssText', {
-      get: function() {
-        if (!this._cssText) {
-          this._cssText = generateCssString(this);
-        }
-        return this._cssText;
-      },
-      set: function(newCssText) {}
-    });
+    makeCSSTextGetter(this, generateCSSText(this));
   }
   internal.inherit(CSSTranslation, internal.CSSTransformComponent);
 
-  // These functions (cssTranslationFromTranslate*) are for making CSSTranslations from parsed CSS
-  // Strings. These are needed for setting the cssText.
-  function cssTranslationFromTranslate(coords, string, remaining) {
-    if (coords.length == 1) {
-      var result = [new CSSTranslation(coords[0], new CSSSimpleLength(0, 'px')), remaining];
-      result[0]._cssText = string;
-      return result;
-    }
-    if (coords.length == 2) {
-      var result = [new CSSTranslation(coords[0], coords[1]), remaining];
-      result[0]._cssText = string;
-      return result;
-    }
-    return null;
-  }
-
-  function cssTranslationFromTranslate3d(coords, string, remaining) {
-    if (coords.length != 3) {
-      return null;
-    }
-    var result = [new CSSTranslation(coords[0], coords[1], coords[2]), remaining];
-    result[0]._cssText = string;
+  function cssTranslation2D(x, y, cssText) {
+    var result = new CSSTranslation(x, y);
+    makeCSSTextGetter(result, cssText);
     return result;
   }
 
-  function cssTranslationFromTranslateX(coords, string, remaining) {
-    if (coords.length != 1) {
-      return null;
-    }
-    var result = [new CSSTranslation(coords[0], new CSSSimpleLength(0, 'px')), remaining];
-    result[0]._cssText = string;
+  function cssTranslation3D(x, y, z, cssText) {
+    var result = new CSSTranslation(x, y, z);
+    makeCSSTextGetter(result, cssText);
     return result;
   }
 
-  function cssTranslationFromTranslateY(coords, string, remaining) {
-    if (coords.length != 1) {
-      return null;
-    }
-    var result = [new CSSTranslation(new CSSSimpleLength(0, 'px'), coords[0]), remaining];
-    result[0]._cssText = string;
-    return result;
-  }
-
-  function cssTranslationFromTranslateZ(coords, string, remaining) {
-    if (coords.length != 1) {
-      return null;
-    }
-    var zeroLength = new CSSSimpleLength(0, 'px');
-    var result = [new CSSTranslation(zeroLength, zeroLength, coords[0]), remaining];
-    result[0]._cssText = string;
-    return result;
-  }
-
-  internal.cssTranslationFromTranslate = cssTranslationFromTranslate;
-  internal.cssTranslationFromTranslate3d = cssTranslationFromTranslate3d;
-  internal.cssTranslationFromTranslateX = cssTranslationFromTranslateX;
-  internal.cssTranslationFromTranslateY = cssTranslationFromTranslateY;
-  internal.cssTranslationFromTranslateZ = cssTranslationFromTranslateZ;
+  internal.cssTranslation2D = cssTranslation2D;
+  internal.cssTranslation3D = cssTranslation3D;
 
   scope.CSSTranslation = CSSTranslation;
 
